@@ -1020,6 +1020,82 @@
                 grid-template-columns: 1fr !important;
             }
         }
+		
+	/* Кнопка-бургер: скрыта на десктопе */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font: 600 14px/1 'Arial', sans-serif;
+}
+
+/* На десктопе навбар как был */
+.nav { position: sticky; top: 100px; }
+
+/* --- Мобильная версия --- */
+@media (max-width: 768px) {
+  .header { position: static; padding: 12px 0; box-shadow: none; }
+  .nav {
+    position: sticky; top: 0; z-index: 999;
+    padding: 10px 0;
+    background-color: rgba(42,42,42,.98);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+  }
+  .main { margin-top: 0; }
+
+  /* Показываем бургер */
+  .nav-toggle { display: inline-flex; }
+
+  /* Иконка-бургер — три полоски в колонку */
+  .nav-toggle .icon {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .nav-toggle .bar {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+  }
+
+  /* Меню свёрнуто по умолчанию */
+  .nav-menu {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 10px;
+  }
+  /* Открытое меню */
+  .nav.open .nav-menu { display: flex; }
+
+  .nav-item { width: 100%; }
+  .nav-link { padding: 12px 14px; border-radius: 8px; text-align: left; }
+
+  /* Выпадашки — как аккордеон */
+  .dropdown {
+    position: static !important;
+    display: none;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    min-width: 100%;
+    margin: 6px 0 8px 12px;
+    border: none; box-shadow: none; background: transparent;
+  }
+  .nav-item.open > .dropdown { display: block; }
+
+  @media (max-width: 768px) {
+  .nav-item:hover .dropdown { display: none; } /* перехватываем старое правило */
+}
+}
     </style>
 </head>
 <body>
@@ -1037,6 +1113,14 @@
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-content">
+<button class="nav-toggle" aria-expanded="false" aria-controls="primary-menu">
+  <span class="icon" aria-hidden="true">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </span>
+  <span class="label">Меню</span>
+</button>
             <ul class="nav-menu">
                 <li class="nav-item">
                     <a href="#home" class="nav-link">Главная</a>
@@ -1886,6 +1970,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   bindUi();
   await loadCatalog();
+});
+document.addEventListener('DOMContentLoaded', () => {
+  const nav = document.querySelector('.nav');
+  const toggle = document.querySelector('.nav-toggle');
+
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      const isOpen = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(isOpen));
+    });
+  }
+
+  // На мобильном раскрываем подменю по клику на родительский пункт
+  if (window.matchMedia('(max-width: 768px)').matches) {
+    document.querySelectorAll('.nav-item').forEach(item => {
+      const link = item.querySelector(':scope > .nav-link');
+      const dropdown = item.querySelector(':scope > .dropdown');
+      if (link && dropdown) {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          item.classList.toggle('open');
+        });
+      }
+    });
+
+    // Закрывать меню после перехода по ссылке
+    document.querySelectorAll('.nav a[href^="#"]').forEach(a => {
+      a.addEventListener('click', () => {
+        nav.classList.remove('open');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
 });
 </script>
 
