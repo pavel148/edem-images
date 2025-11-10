@@ -1672,13 +1672,21 @@ const categoryMapping = {
   'cemetery-fences': 'Оградки для кладбищ',
   'improvement': 'Примеры наших работ',
   'grave-care': 'уход за захоронением',
-  'vertical-monuments': 'памятники',
-  'vertical-carved': 'памятники',
-  'horizontal-monuments': 'памятники',
-  'horizontal-carved': 'памятники',
-  'combined-monuments': 'памятники',
-  'complexes': 'памятники'
+
+  // НОВОЕ: подпункты каталога памятников — это фильтры по тегам
+  'vertical-monuments': 'памятники:вертикальные',
+  'vertical-carved': 'памятники:вертикальные_резные',
+  'horizontal-monuments': 'памятники:горизонтальные',
+  'horizontal-carved': 'памятники:горизонтальные_резные',
+  'combined-monuments': 'памятники:комбинированные',
+  'complexes': 'памятники:комплексы'
 };
+
+function hasTag(item, tag) {
+  if (!item) return false;
+  const t = (item.tags || []).map(s => String(s).trim().toLowerCase());
+  return t.includes(String(tag).trim().toLowerCase());
+}
 
 // Человекочитаемые названия
 const categoryNames = {
@@ -1725,9 +1733,23 @@ function sanitizeUrl(url) {
 function getCategoryData(category) {
   const mapped = categoryMapping[category];
   if (!mapped) return [];
+
+  // Особый случай: кресты + металлические кресты
   if (mapped === 'кресты+металлические') {
-    return [ ...(CATALOG_DATA['кресты'] || []), ...(CATALOG_DATA['металлические кресты'] || []) ];
+    return [
+      ...(CATALOG_DATA['кресты'] || []),
+      ...(CATALOG_DATA['металлические кресты'] || [])
+    ];
   }
+
+  // Фильтры вида "памятники:тег"
+  if (mapped.startsWith('памятники:')) {
+    const tag = mapped.split(':')[1];
+    const all = CATALOG_DATA['памятники'] || [];
+    return all.filter(item => hasTag(item, tag));
+  }
+
+  // Обычные категории 1:1
   return CATALOG_DATA[mapped] || [];
 }
 
