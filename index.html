@@ -1906,11 +1906,24 @@ function loadImprovementGallery() {
   }));
 
   countEl.textContent = items.length;
+
+  // 1) сохраняем глобально
+  window.improvementImages = items;
+
+  // 2) рисуем карточки без inline-JS
   grid.innerHTML = items.map((item, idx) => `
-    <div class="gallery-item" onclick="openGallery(${JSON.stringify(items)}, ${idx})">
+    <div class="gallery-item" data-idx="${idx}">
       <img src="${item.url}" alt="${item.alt}" class="gallery-image" loading="lazy">
     </div>
   `).join('');
+
+  // 3) навешиваем клики программно
+  grid.querySelectorAll('.gallery-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = Number(el.dataset.idx || 0);
+      openGallery(window.improvementImages, i);
+    });
+  });
 }
 
 // Плавный скролл
@@ -2017,15 +2030,18 @@ function bindUi() {
 }
 
 // ===== STARTUP =====
+// ===== STARTUP =====
 document.addEventListener('DOMContentLoaded', async () => {
   // Полезная проверка: запускать через http://, а не file://
   if (location.protocol === 'file:') {
     console.warn('Запустите страницу через локальный сервер (http://localhost:PORT), иначе fetch JSON может быть заблокирован CORS.');
   }
-  bindUi();
-  await loadCatalog();
-});
-document.addEventListener('DOMContentLoaded', () => {
+
+  bindUi();                // навешиваем обработчики модалки/галереи/скролла
+  await loadCatalog();     // грузим JSON и отрисовываем «Примеры наших работ»
+  initGraveCleaningImages();// собираем массив для openGallery(graveCleaningImages, i)
+
+  // Мобильное меню (бургер + аккордеон подменю)
   const nav = document.querySelector('.nav');
   const toggle = document.querySelector('.nav-toggle');
 
@@ -2036,7 +2052,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // На мобильном раскрываем подменю по клику на родительский пункт
   if (window.matchMedia('(max-width: 768px)').matches) {
     document.querySelectorAll('.nav-item').forEach(item => {
       const link = item.querySelector(':scope > .nav-link');
@@ -2049,7 +2064,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Закрывать меню после перехода по ссылке
     document.querySelectorAll('.nav a[href^="#"]').forEach(a => {
       a.addEventListener('click', () => {
         nav.classList.remove('open');
@@ -2058,5 +2072,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// Собираем изображения из блока "Уборка места захоронений" для inline-обработчиков
+function initGraveCleaningImages() {
+  const imgs = document.querySelectorAll('.grave-cleaning-gallery .gallery-image');
+  const list = Array.from(imgs).map(img => ({
+    url: img.getAttribute('src'),
+    alt: img.getAttribute('alt') || ''
+  }));
+  window.graveCleaningImages = list; // делаем доступным глобально
+}
 </script>
 
